@@ -1,13 +1,15 @@
-name: Build and Deploy React App
+
+name: Build and Deploy React App to Azure Container Apps
 
 on:
   push:
-    branches: [Add-files]
-  workflow_dispatch:  # Enables manual trigger from GitHub UI
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -23,12 +25,18 @@ jobs:
       - name: Run Tests
         run: npm test -- --watchAll=false
 
-      - name: Build
+      - name: Build React App
         run: npm run build
 
-      - name: Deploy (Example using GitHub Pages)
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Log in to Azure
+        uses: azure/login@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Build and Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          acrName: reactyml
+          containerAppName: reactyml-app
+          resourceGroup: myResourceGroup
+          appSourcePath: ${{ github.workspace }}
